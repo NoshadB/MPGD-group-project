@@ -6,7 +6,9 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed;
+    private float moveSpeed;
+    public float walkSpeed;
+    public float sprintSpeed;
 
     public float groundDrag;
 
@@ -17,6 +19,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
+    public KeyCode sprintKey = KeyCode.LeftShift;
 
     [Header("Ground Check")]
     public float playerHeight;
@@ -32,8 +35,63 @@ public class PlayerMovement : MonoBehaviour
 
     Rigidbody rb;
 
+    private Animator animator;
+    int isWalkingHash;
+    int isRunningHash;
+
+    public MovementState state;
+    public enum MovementState
+    {
+        walking,
+        sprinting,
+        air
+    }
+
     public void Start()
     {
+
+        // Find the "Player" object (you can use GameObject.Find, FindGameObjectWithTag, etc.)
+        Transform player = GameObject.Find("Player").transform;
+
+        if (player != null)
+        {
+            // Find the "PlayerObj" object as a child of "Player"
+            Transform playerObj = player.Find("PlayerObj");
+
+            if (playerObj != null)
+            {
+                // Find the "Y Bot" object as a child of "PlayerObj"
+                Transform yBot = playerObj.Find("Y Bot");
+
+                if (yBot != null)
+                {
+                    // Get the Animator component from "Y Bot"
+                    animator = yBot.GetComponent<Animator>();
+
+                    if (animator != null)
+                    {
+                        // You now have the Animator component from "Y Bot"
+                        Debug.Log("Animator found!");
+                    }
+                    else
+                    {
+                        Debug.LogError("Animator component not found on 'Y Bot'.");
+                    }
+                }
+                else
+                {
+                    Debug.LogError("'Y Bot' not found under 'PlayerObj'.");
+                }
+            }
+            else
+            {
+                Debug.LogError("'PlayerObj' not found under 'Player'.");
+            }
+        }
+        else{
+            Debug.LogError("'Player' not found in the hierarchy.");
+        }
+
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         ResetJump();
@@ -45,6 +103,7 @@ public class PlayerMovement : MonoBehaviour
 
         MyInput();
         SpeedControl();
+        StateHandler();
 
         // handle drag
         if (grounded)
@@ -60,6 +119,24 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log(grounded);
         if (Input.GetKey(jumpKey))
             Debug.Log(jumpKey);
+
+
+        //animation for walking ctr k + c
+        if (moveDirection != Vector3.zero && moveSpeed<= 7)
+        {
+            animator.SetBool("IsMoving", true);
+            animator.SetBool("IsRunning", false);
+        }
+        else if ((moveDirection != Vector3.zero && moveSpeed > 7))
+        {
+            animator.SetBool("IsMoving", true);
+            animator.SetBool("IsRunning", true);
+        }
+        else
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetBool("IsRunning", false);
+        }
 
     }
 
@@ -81,6 +158,27 @@ public class PlayerMovement : MonoBehaviour
             Invoke(nameof(ResetJump), jumpCooldown);
         }
 
+    }
+
+    private void StateHandler()
+    {
+        //sprinting 
+        if (grounded && Input.GetKey(sprintKey))
+        {
+            state = MovementState.sprinting;
+            moveSpeed = sprintSpeed;
+        }
+        //walking
+        else if (grounded)
+        {
+            state = MovementState.walking;
+            moveSpeed = walkSpeed;
+        }
+        //air
+        else
+        {
+            state = MovementState.air;
+        }
     }
 
     private void MovePlayer()
