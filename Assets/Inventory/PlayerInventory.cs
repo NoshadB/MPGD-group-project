@@ -86,7 +86,7 @@ public class PlayerInventory : MonoBehaviour
             inventoryOpen = !inventoryOpen;
 
             //If inventory open or closed, then it is shown or hidden by setting the canvas group settings.
-            CanvasGroup playerUI = GameObject.Find("PlayerUI").GetComponent<CanvasGroup>();
+            CanvasGroup playerUI = GameObject.Find("PlayerInventoryUI").GetComponent<CanvasGroup>();
             playerUI.alpha = inventoryOpen ? 1 : 0;
             playerUI.interactable = inventoryOpen;
 
